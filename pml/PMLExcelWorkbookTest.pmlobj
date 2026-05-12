@@ -1,0 +1,95 @@
+﻿!!PMLEXCELPATH()
+import '$!!PMLEXCELPATH'
+handle any
+endhandle
+
+define object PMLExcelWorkbookTest
+    member .sleeptime is REAL
+endobject
+
+define method .setup()
+    !this.sleeptime = 50
+endmethod
+
+define method .testOpenAndSave(!assert is PmlAssert)
+    using namespace 'PMLExcel'
+    !wb = object PMLExcelWorkbook()
+    !file = object FILE('%temp%\pmlexceltest.xlsx')
+
+    !wb.Open()
+    !wb.Show()
+    !wb.Cells(1, 1).SetValue('test 1')
+    !wb.SaveAs(!file.Name())
+    !wb.Sleep(!this.sleeptime)
+    !wb.Close()
+
+    !wb.Open(!file.Name())
+    !wb.Show()
+    !assert.equal('test 1', !wb.Cells(1, 1).GetValue())
+    !wb.Cells(1, 1).SetValue('test 2')
+    !wb.Save()
+    !wb.Sleep(!this.sleeptime)
+    !wb.Close()
+
+    !wb.Open(!file.Name())
+    !wb.Show()
+    !assert.equal('test 2', !wb.Cells(1, 1).GetValue())
+    !wb.Cells(1, 1).SetValue('ok')
+    !wb.Sleep(!this.sleeptime)
+    !wb.Close()
+    !file.DeleteFile()
+endmethod
+
+define method .testShowAndHide(!assert is PmlAssert)
+    using namespace 'PMLExcel'
+    !wb = object PMLExcelWorkbook()
+    !wb.Open()
+    !wb.Show()
+    !wb.Cells(1, 1).SetValue('testtest 1')
+    !wb.Cells(1, 1).AutoFitColumns()
+    !wb.Sleep(!this.sleeptime)
+    !wb.Hide()
+    !wb.Cells(1, 1).SetValue('test 2')
+    !wb.Cells(1, 1).AutoFitColumns()
+    !wb.Sleep(!this.sleeptime)
+    !wb.Show()
+    !wb.Sleep(!this.sleeptime)
+    !wb.Close()
+endmethod
+
+define method .testControlSheet(!assert is PmlAssert)
+    using namespace 'PMLExcel'
+    !wb = object PMLExcelWorkbook()
+    !wb.Open()
+    !wb.Show()
+    !wb.Sleep(!this.sleeptime)
+    !wb.AddSheet()
+    !wb.Sleep(!this.sleeptime)
+    !wb.Cells(1, 1).SetValue('test 1')
+    !wb.Sleep(!this.sleeptime)
+    !wb.SetActiveSheetName('foo')
+    !wb.Sleep(!this.sleeptime)
+    !wb.AddSheet('bar')
+    !wb.Sleep(!this.sleeptime)
+    !wb.Cells(1, 1).SetValue('test 2')
+    !wb.Sleep(!this.sleeptime)
+    !wb.CopySheet('bar', 'baz')
+    !wb.Sleep(!this.sleeptime)
+    !wb.SelectSheet('foo')
+    !assert.equal('test 1', !wb.Cells(1, 1).GetValue())
+    !wb.Sleep(!this.sleeptime)
+    !wb.SelectSheet('bar')
+    !assert.equal('test 2', !wb.Cells(1, 1).GetValue())
+    !wb.Sleep(!this.sleeptime)
+    !wb.SelectSheet('baz')
+    !assert.equal('test 2', !wb.Cells(1, 1).GetValue())
+    !wb.Sleep(!this.sleeptime)
+    !wb.DeleteSheet('foo')
+    !wb.Sleep(!this.sleeptime)
+    !wb.DeleteSheet('bar')
+    !wb.Sleep(!this.sleeptime)
+    !wb.DeleteSheet('baz')
+    !wb.Cells(1, 1).SetValue('ok')
+    !wb.Sleep(!this.sleeptime)
+    !wb.Close()
+endmethod

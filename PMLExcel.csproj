@@ -1,0 +1,49 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <AvevaVersion Condition="'$(AvevaVersion)'==''">E3D3.1</AvevaVersion>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <PublishRelease>true</PublishRelease>
+    <DebugType>none</DebugType>
+    <Copyright>Copyright (c) 2026 K.Awata</Copyright>
+    <Version>0.1.0</Version>
+  </PropertyGroup>
+
+  <Choose>
+    <When Condition="'$(AvevaVersion)'=='E3D2.1'">
+      <PropertyGroup>
+        <PlatformTarget>x86</PlatformTarget>
+        <RuntimeIdentifier>win-x86</RuntimeIdentifier>
+        <PMLNetPath>C:\Program Files (x86)\AVEVA\Everything3D2.10\PMLNet.dll</PMLNetPath>
+      </PropertyGroup>
+    </When>
+
+    <When Condition="'$(AvevaVersion)'=='E3D3.1'">
+      <PropertyGroup>
+        <PlatformTarget>x86</PlatformTarget>
+        <RuntimeIdentifier>win-x86</RuntimeIdentifier>
+        <PMLNetPath>C:\Program Files (x86)\AVEVA\Everything3D3.1\PMLNet.dll</PMLNetPath>
+      </PropertyGroup>
+    </When>
+
+    <When Condition="'$(AvevaVersion)'=='UE4.0'">
+      <PropertyGroup>
+        <PlatformTarget>x64</PlatformTarget>
+        <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+        <PMLNetPath>C:\Program Files\WindowsApps\AVEVA.UnifiedEngineering_4010.2604.210.1901_x64__rmxc60bdg8z8w\VFS\ProgramFilesX64\AVEVA\UE\PMLNet.dll</PMLNetPath>
+      </PropertyGroup>
+    </When>
+  </Choose>
+
+  <ItemGroup>
+    <Reference Include="PMLNet">
+      <HintPath>$(PMLNetPath)</HintPath>
+      <Private>false</Private>
+    </Reference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Office.Interop.Excel" Version="15.0.4795.1001" />
+  </ItemGroup>
+
+</Project>
