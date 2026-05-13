@@ -75,12 +75,42 @@ define method .testCurrentRegion(!assert is PmlAssert)
     !wb.Close()
 endmethod
 
+define method .testSetValueArray(!assert is PmlAssert)
+    using namespace 'PMLExcel'
+    !wb = object PMLExcelWorkbook()
+    !wb.Open()
+    !expecteds = Split('Alice Bob Charlie')
+    !range = !wb.Range('B2:D2')
+    !range.SetValue(!expecteds)
+    !cells = !range.ToArray()
+    do !i indices !cells
+        !assert.equal(!expecteds[!i], !cells[!i].GetValue())
+    enddo
+endmethod
+
+define method .testSetValueArrayOfArray(!assert is PmlAssert)
+    using namespace 'PMLExcel'
+    !wb = object PMLExcelWorkbook()
+    !wb.Open()
+    !expecteds[1] = Split('Alice US 123')
+    !expecteds[2] = Split('Bob UK 456')
+    !expecteds[3] = Split('Charlie Canada 789')
+    !range = !wb.Range('B2:D4')
+    !range.SetValue(!expecteds)
+    !rows = !range.ToArrayOfArray()
+    do !r indices !rows
+        do !c indices !rows[!r]
+            !assert.equal(!expecteds[!r][!c], !rows[!r][!c].GetValue())
+        enddo
+    enddo
+endmethod
+
 define method .testFormula(!assert is PmlAssert)
     using namespace 'PMLExcel'
     !wb = object PMLExcelWorkbook()
     !wb.Open()
     !range = !wb.Cells(1, 1)
-    !range.SetFormula('=1+2')
+    !range.SetValue('=1+2')
     !assert.equal('=1+2', !range.GetFormula())
     !assert.equal('3', !range.GetValue())
     !wb.Close()

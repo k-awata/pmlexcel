@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using System.Linq;
 using System.Runtime.InteropServices;
 using Aveva.Core.PMLNet;
 using Excel = Microsoft.Office.Interop.Excel;
@@ -83,35 +84,60 @@ namespace PMLExcel
         }
 
         [PMLNetCallable()]
-        public string GetFormula()
+        public void SetValue(string s)
         {
-            if (range.Formula is object[,] objs)
-            {
-                return Convert.ToString(objs[objs.GetLowerBound(0), objs.GetLowerBound(1)]);
-            }
-            return Convert.ToString(range.Formula);
+            range.Value = s;
         }
 
         [PMLNetCallable()]
-        public void SetFormula(string s)
+        public void SetValue(Hashtable rows)
         {
-            range.Formula = s;
+            var rCount = rows.Count;
+            var cCount = rows.Values.OfType<Hashtable>().DefaultIfEmpty(new Hashtable()).Max(cols => cols.Count);
+            if (cCount == 0)
+            {
+                var values = new object[rCount];
+                for (int r = 0; r < rCount; r++)
+                {
+                    values[r] = rows[r + 1.0];
+                }
+                range.Value = values;
+            }
+            else
+            {
+                var values = new object[rCount, cCount];
+                for (int r = 0; r < rCount; r++)
+                {
+                    if (rows[r + 1.0] is Hashtable cols)
+                    {
+                        for (int c = 0; c < cCount; c++)
+                        {
+                            values[r, c] = cols[c + 1.0];
+                        }
+                    }
+                }
+                range.Value = values;
+            }
         }
 
         [PMLNetCallable()]
         public string GetValue()
         {
-            if (range.Value is object[,] objs)
+            if (range.Value is object[,] cells)
             {
-                return Convert.ToString(objs[objs.GetLowerBound(0), objs.GetLowerBound(1)]);
+                return Convert.ToString(cells[cells.GetLowerBound(0), cells.GetLowerBound(1)]);
             }
             return Convert.ToString(range.Value);
         }
 
         [PMLNetCallable()]
-        public void SetValue(string s)
+        public string GetFormula()
         {
-            range.Value = s;
+            if (range.Formula is object[,] cells)
+            {
+                return Convert.ToString(cells[cells.GetLowerBound(0), cells.GetLowerBound(1)]);
+            }
+            return Convert.ToString(range.Formula);
         }
 
         [PMLNetCallable()]

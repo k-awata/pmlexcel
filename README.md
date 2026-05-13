@@ -4,7 +4,7 @@ PMLExcel provides an interface to control Excel in AVEVA PML2.
 
 ## Installation
 
-1. Download the ZIP archive from [Releases](https://github.com/k-awata/pmljsonnet/releases).
+1. Download the ZIP archive from [Releases](https://github.com/k-awata/pmlexcel/releases).
 
 2. Extract the files and folders from the ZIP archive and place them in a directory specified by the `PMLLIB` environment variable.
 
