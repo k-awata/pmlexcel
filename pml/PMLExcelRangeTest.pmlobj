@@ -66,6 +66,14 @@ define method .testOffset(!assert is PmlAssert)
     !wb.Close()
 endmethod
 
+define method .testResize(!assert is PmlAssert)
+    using namespace 'PMLExcel'
+    !wb = object PMLExcelWorkbook()
+    !wb.Open()
+    !assert.equal('$$B$$2:$$D$$3', !wb.Range('B2').Resize(2, 3).GetAddress())
+    !wb.Close()
+endmethod
+
 define method .testCurrentRegion(!assert is PmlAssert)
     using namespace 'PMLExcel'
     !wb = object PMLExcelWorkbook()

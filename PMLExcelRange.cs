@@ -78,6 +78,19 @@ namespace PMLExcel
         }
 
         [PMLNetCallable()]
+        public PMLExcelRange Resize(double r, double c)
+        {
+            try
+            {
+                return new PMLExcelRange(range.Resize[(long)r, (long)c]);
+            }
+            catch (COMException)
+            {
+                throw new PMLNetException(1000, 12, "Invalid range reference");
+            }
+        }
+
+        [PMLNetCallable()]
         public PMLExcelRange CurrentRegion()
         {
             return new PMLExcelRange(range.CurrentRegion);
