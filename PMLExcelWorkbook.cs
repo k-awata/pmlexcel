@@ -332,7 +332,7 @@ namespace PMLExcel
             }
         }
 
-        private object ConvertPMLTypeToObject(object obj)
+        private static object ConvertPMLTypeToObject(object obj)
         {
             if (obj is PMLExcelRange r)
             {
