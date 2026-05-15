@@ -54,7 +54,44 @@ namespace PMLExcel
                 throw new PMLNetException(1000, 1, "Excel is already open");
             }
             app = new Application();
+
+            // app.SheetBeforeDoubleClick += new AppEvents_SheetBeforeDoubleClickEventHandler(RaiseSheetBeforeDoubleClick);
+            // app.SheetBeforeRightClick += new AppEvents_SheetBeforeRightClickEventHandler(RaiseSheetBeforeRightClick);
+            // app.SheetChange += new AppEvents_SheetChangeEventHandler(RaiseSheetChange);
+            // app.SheetSelectionChange += new AppEvents_SheetSelectionChangeEventHandler(RaiseSheetSelectionChange);
         }
+
+        // [PMLNetCallable()]
+        // public event PMLNetDelegate.PMLNetEventHandler SheetBeforeDoubleClick;
+
+        // private void RaiseSheetBeforeDoubleClick(object Sh, Range Target, ref bool Cancel)
+        // {
+        //     SheetBeforeDoubleClick?.Invoke(new ArrayList { new PMLExcelRange(Target), Cancel });
+        // }
+
+        // [PMLNetCallable()]
+        // public event PMLNetDelegate.PMLNetEventHandler SheetBeforeRightClick;
+
+        // private void RaiseSheetBeforeRightClick(object Sh, Range Target, ref bool Cancel)
+        // {
+        //     SheetBeforeRightClick?.Invoke(new ArrayList { new PMLExcelRange(Target), Cancel });
+        // }
+
+        // [PMLNetCallable()]
+        // public event PMLNetDelegate.PMLNetEventHandler SheetChange;
+
+        // private void RaiseSheetChange(object Sh, Range Target)
+        // {
+        //     SheetChange?.Invoke(new ArrayList { new PMLExcelRange(Target) });
+        // }
+
+        // [PMLNetCallable()]
+        // public event PMLNetDelegate.PMLNetEventHandler SheetSelectionChange;
+
+        // private void RaiseSheetSelectionChange(object Sh, Range Target)
+        // {
+        //     SheetSelectionChange?.Invoke(new ArrayList { new PMLExcelRange(Target) });
+        // }
 
         [PMLNetCallable()]
         public void Open()
