@@ -7,7 +7,7 @@ using System.Runtime.InteropServices;
 using System.Threading;
 using Aveva.Core.PMLNet;
 using Microsoft.Office.Core;
-using Excel = Microsoft.Office.Interop.Excel;
+using Microsoft.Office.Interop.Excel;
 
 namespace PMLExcel
 {
@@ -20,8 +20,8 @@ namespace PMLExcel
         [DllImport("user32.dll")]
         private static extern bool SetForegroundWindow(IntPtr hWnd);
 
-        private Excel.Application app;
-        private Excel.Workbook wb;
+        private Application app;
+        private Workbook wb;
 
         [PMLNetCallable()]
         public PMLExcelWorkbook()
@@ -53,7 +53,7 @@ namespace PMLExcel
             {
                 throw new PMLNetException(1000, 1, "Excel is already open");
             }
-            app = new Excel.Application();
+            app = new Application();
         }
 
         [PMLNetCallable()]
@@ -131,7 +131,7 @@ namespace PMLExcel
         {
             try
             {
-                return new PMLExcelRange((Excel.Range)app.Cells[(int)r, (int)c]);
+                return new PMLExcelRange((Range)app.Cells[(int)r, (int)c]);
             }
             catch (COMException)
             {
@@ -155,7 +155,7 @@ namespace PMLExcel
         [PMLNetCallable()]
         public PMLExcelRange Selection()
         {
-            if (app.Selection is Excel.Range r)
+            if (app.Selection is Range r)
             {
                 return new PMLExcelRange(r);
             }
@@ -168,7 +168,7 @@ namespace PMLExcel
         [PMLNetCallable()]
         public PMLExcelRange UsedRange()
         {
-            return new PMLExcelRange(((Excel.Worksheet)app.ActiveSheet).UsedRange);
+            return new PMLExcelRange(((Worksheet)app.ActiveSheet).UsedRange);
         }
 
         [PMLNetCallable()]
@@ -180,13 +180,13 @@ namespace PMLExcel
         [PMLNetCallable()]
         public void AddSheet(string name)
         {
-            ((Excel.Worksheet)wb.Worksheets.Add(After: wb.Worksheets[wb.Worksheets.Count])).Name = name;
+            ((Worksheet)wb.Worksheets.Add(After: wb.Worksheets[wb.Worksheets.Count])).Name = name;
         }
 
         [PMLNetCallable()]
         public void CopySheet(string from, string to)
         {
-            var ws = (Excel.Worksheet)wb.Worksheets[from];
+            var ws = (Worksheet)wb.Worksheets[from];
             ws.Copy(After: ws);
             NameActiveSheet(to);
         }
@@ -195,20 +195,20 @@ namespace PMLExcel
         public void DeleteSheet(string name)
         {
             app.DisplayAlerts = false;
-            ((Excel.Worksheet)wb.Worksheets[name]).Delete();
+            ((Worksheet)wb.Worksheets[name]).Delete();
             app.DisplayAlerts = true;
         }
 
         [PMLNetCallable()]
         public void ActivateSheet(string name)
         {
-            ((Excel.Worksheet)wb.Worksheets[name]).Activate();
+            ((Worksheet)wb.Worksheets[name]).Activate();
         }
 
         [PMLNetCallable()]
         public void NameActiveSheet(string name)
         {
-            ((Excel.Worksheet)app.ActiveSheet).Name = name;
+            ((Worksheet)app.ActiveSheet).Name = name;
         }
 
         [PMLNetCallable()]
@@ -220,7 +220,7 @@ namespace PMLExcel
         [PMLNetCallable()]
         public void Paste()
         {
-            ((Excel.Worksheet)app.ActiveSheet).Paste();
+            ((Worksheet)app.ActiveSheet).Paste();
         }
 
         [PMLNetCallable()]
@@ -247,7 +247,7 @@ namespace PMLExcel
         {
             try
             {
-                ((Excel.Worksheet)app.ActiveSheet).Shapes.Range[name].Select();
+                ((Worksheet)app.ActiveSheet).Shapes.Range[name].Select();
             }
             catch (COMException)
             {
@@ -258,7 +258,7 @@ namespace PMLExcel
         [PMLNetCallable()]
         public bool SelectAllShapes()
         {
-            var s = (Excel.Worksheet)app.ActiveSheet;
+            var s = (Worksheet)app.ActiveSheet;
             s.Shapes.SelectAll();
             return s.Shapes.Count > 0;
         }
@@ -272,7 +272,7 @@ namespace PMLExcel
         [PMLNetCallable()]
         public void FitSelectedPictureInRange(PMLExcelRange range)
         {
-            if (app.Selection is Excel.Picture p)
+            if (app.Selection is Picture p)
             {
                 double rHeight = (double)range.Raw.Height - 2;
                 double rWidth = (double)range.Raw.Width - 2;
@@ -287,7 +287,7 @@ namespace PMLExcel
                 {
                     p.ShapeRange.ScaleWidth((float)(rWidth / p.Width), MsoTriState.msoFalse, MsoScaleFrom.msoScaleFromTopLeft);
                 }
-                p.Placement = Excel.XlPlacement.xlMoveAndSize;
+                p.Placement = XlPlacement.xlMoveAndSize;
             }
             else
             {
@@ -311,7 +311,7 @@ namespace PMLExcel
         [PMLNetCallable()]
         public string WorksheetFunction(string function, Hashtable args)
         {
-            MethodInfo method = typeof(Excel.WorksheetFunction).GetMethod(
+            MethodInfo method = typeof(WorksheetFunction).GetMethod(
                 function.Replace(".", "_"),
                 BindingFlags.IgnoreCase | BindingFlags.Instance | BindingFlags.Public | BindingFlags.InvokeMethod
             ) ?? throw new PMLNetException(1000, 9, "Function is not found");

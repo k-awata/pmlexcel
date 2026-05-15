@@ -3,7 +3,7 @@ using System.Collections;
 using System.Linq;
 using System.Runtime.InteropServices;
 using Aveva.Core.PMLNet;
-using Excel = Microsoft.Office.Interop.Excel;
+using Microsoft.Office.Interop.Excel;
 
 namespace PMLExcel
 {
@@ -13,14 +13,14 @@ namespace PMLExcel
     [PMLNetCallable()]
     public class PMLExcelRange
     {
-        public Excel.Range Raw { get; private set; }
+        public Range Raw { get; private set; }
 
         [PMLNetCallable()]
         public PMLExcelRange()
         {
         }
 
-        public PMLExcelRange(Excel.Range r)
+        public PMLExcelRange(Range r)
         {
             Raw = r;
         }
@@ -41,7 +41,7 @@ namespace PMLExcel
         {
             try
             {
-                return new PMLExcelRange((Excel.Range)Raw.Cells[(long)i]);
+                return new PMLExcelRange((Range)Raw.Cells[(long)i]);
             }
             catch (COMException)
             {
@@ -54,7 +54,7 @@ namespace PMLExcel
         {
             try
             {
-                return new PMLExcelRange((Excel.Range)Raw.Cells[(int)r, (int)c]);
+                return new PMLExcelRange((Range)Raw.Cells[(int)r, (int)c]);
             }
             catch (COMException)
             {
@@ -191,9 +191,9 @@ namespace PMLExcel
         [PMLNetCallable()]
         public void CreateTable(string name, bool hasHeaders)
         {
-            ((Excel.Worksheet)Raw.Parent).ListObjects.Add(
+            ((Worksheet)Raw.Parent).ListObjects.Add(
                 Source: Raw,
-                XlListObjectHasHeaders: hasHeaders ? Excel.XlYesNoGuess.xlYes : Excel.XlYesNoGuess.xlNo
+                XlListObjectHasHeaders: hasHeaders ? XlYesNoGuess.xlYes : XlYesNoGuess.xlNo
             ).Name = name;
         }
 
@@ -242,7 +242,7 @@ namespace PMLExcel
         [PMLNetCallable()]
         public void Paste()
         {
-            ((Excel.Worksheet)Raw.Parent).Paste(Raw);
+            ((Worksheet)Raw.Parent).Paste(Raw);
         }
     }
 }
