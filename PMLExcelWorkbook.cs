@@ -1,7 +1,12 @@
 ﻿using System;
+using System.Collections;
+using System.ComponentModel;
+using System.Linq;
+using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Threading;
 using Aveva.Core.PMLNet;
+using Microsoft.Office.Core;
 using Excel = Microsoft.Office.Interop.Excel;
 
 namespace PMLExcel
@@ -118,14 +123,7 @@ namespace PMLExcel
         [PMLNetCallable()]
         public PMLExcelRange Cells()
         {
-            try
-            {
-                return new PMLExcelRange(app.Cells);
-            }
-            catch (COMException)
-            {
-                throw new PMLNetException(1000, 3, "Invalid range reference");
-            }
+            return new PMLExcelRange(app.Cells);
         }
 
         [PMLNetCallable()]
@@ -137,7 +135,7 @@ namespace PMLExcel
             }
             catch (COMException)
             {
-                throw new PMLNetException(1000, 4, "Invalid range reference");
+                throw new PMLNetException(1000, 3, "Invalid range reference");
             }
         }
 
@@ -150,21 +148,27 @@ namespace PMLExcel
             }
             catch (COMException)
             {
-                throw new PMLNetException(1000, 5, "Invalid range reference");
+                throw new PMLNetException(1000, 4, "Invalid range reference");
             }
         }
 
         [PMLNetCallable()]
         public PMLExcelRange Selection()
         {
-            try
+            if (app.Selection is Excel.Range r)
             {
-                return new PMLExcelRange((Excel.Range)app.Selection);
+                return new PMLExcelRange(r);
             }
-            catch (COMException)
+            else
             {
-                throw new PMLNetException(1000, 6, "Invalid range reference");
+                throw new PMLNetException(1000, 5, "Invalid range reference");
             }
+        }
+
+        [PMLNetCallable()]
+        public PMLExcelRange UsedRange()
+        {
+            return new PMLExcelRange(((Excel.Worksheet)app.ActiveSheet).UsedRange);
         }
 
         [PMLNetCallable()]
@@ -184,7 +188,7 @@ namespace PMLExcel
         {
             var ws = (Excel.Worksheet)wb.Worksheets[from];
             ws.Copy(After: ws);
-            SetActiveSheetName(to);
+            NameActiveSheet(to);
         }
 
         [PMLNetCallable()]
@@ -196,15 +200,136 @@ namespace PMLExcel
         }
 
         [PMLNetCallable()]
-        public void SelectSheet(string name)
+        public void ActivateSheet(string name)
         {
-            ((Excel.Worksheet)wb.Worksheets[name]).Select();
+            ((Excel.Worksheet)wb.Worksheets[name]).Activate();
         }
 
         [PMLNetCallable()]
-        public void SetActiveSheetName(string name)
+        public void NameActiveSheet(string name)
         {
             ((Excel.Worksheet)app.ActiveSheet).Name = name;
+        }
+
+        [PMLNetCallable()]
+        public void CopySelection()
+        {
+            ((dynamic)app.Selection).Copy();
+        }
+
+        [PMLNetCallable()]
+        public void Paste()
+        {
+            ((Excel.Worksheet)app.ActiveSheet).Paste();
+        }
+
+        [PMLNetCallable()]
+        public void NameSelection(string name)
+        {
+            ((dynamic)app.Selection).Name = name;
+        }
+
+        [PMLNetCallable()]
+        public void DeleteName(string name)
+        {
+            try
+            {
+                wb.Names.Item(name).Delete();
+            }
+            catch (COMException)
+            {
+                throw new PMLNetException(1000, 6, "Invalid name");
+            }
+        }
+
+        [PMLNetCallable()]
+        public void SelectShape(string name)
+        {
+            try
+            {
+                ((Excel.Worksheet)app.ActiveSheet).Shapes.Range[name].Select();
+            }
+            catch (COMException)
+            {
+                throw new PMLNetException(1000, 7, "Invalid shape name");
+            }
+        }
+
+        [PMLNetCallable()]
+        public bool SelectAllShapes()
+        {
+            var s = (Excel.Worksheet)app.ActiveSheet;
+            s.Shapes.SelectAll();
+            return s.Shapes.Count > 0;
+        }
+
+        [PMLNetCallable()]
+        public void DeleteSelection()
+        {
+            ((dynamic)app.Selection).Delete();
+        }
+
+        [PMLNetCallable()]
+        public void FitSelectedPictureInRange(PMLExcelRange range)
+        {
+            if (app.Selection is Excel.Picture p)
+            {
+                double rHeight = (double)range.Raw.Height - 2;
+                double rWidth = (double)range.Raw.Width - 2;
+                p.Top = (double)range.Raw.Top + 1;
+                p.Left = (double)range.Raw.Left + 1;
+                p.ShapeRange.ScaleHeight(1, MsoTriState.msoTrue, MsoScaleFrom.msoScaleFromTopLeft);
+                if (rHeight < rWidth)
+                {
+                    p.ShapeRange.ScaleHeight((float)(rHeight / p.Height), MsoTriState.msoFalse, MsoScaleFrom.msoScaleFromTopLeft);
+                }
+                else
+                {
+                    p.ShapeRange.ScaleWidth((float)(rWidth / p.Width), MsoTriState.msoFalse, MsoScaleFrom.msoScaleFromTopLeft);
+                }
+                p.Placement = Excel.XlPlacement.xlMoveAndSize;
+            }
+            else
+            {
+                throw new PMLNetException(1000, 8, "Selection is not Picture");
+            }
+        }
+
+        private object ConvertPMLTypeToObject(object obj)
+        {
+            if (obj is PMLExcelRange r)
+            {
+                return r.Raw;
+            }
+            else if (obj is Hashtable h)
+            {
+                return h.Keys.OfType<double>().OrderBy(key => key).Select(key => ConvertPMLTypeToObject(h[key])).ToArray();
+            }
+            return obj;
+        }
+
+        [PMLNetCallable()]
+        public string WorksheetFunction(string function, Hashtable args)
+        {
+            MethodInfo method = typeof(Excel.WorksheetFunction).GetMethod(
+                function.Replace(".", "_"),
+                BindingFlags.IgnoreCase | BindingFlags.Instance | BindingFlags.Public | BindingFlags.InvokeMethod
+            ) ?? throw new PMLNetException(1000, 9, "Function is not found");
+            var argTypes = method.GetParameters().Select(p => p.ParameterType).ToArray();
+            var argValues = new object[argTypes.Count()];
+            for (int i = 0; i < argTypes.Count(); i++)
+            {
+                var val = ConvertPMLTypeToObject(args[i + 1.0]);
+                if (argTypes[i] != typeof(object))
+                {
+                    argValues[i] = TypeDescriptor.GetConverter(argTypes[i]).ConvertFrom(val);
+                }
+                else
+                {
+                    argValues[i] = val;
+                }
+            }
+            return method.Invoke(app.WorksheetFunction, argValues).ToString();
         }
     }
 }

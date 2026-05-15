@@ -10,7 +10,9 @@ define method .testActiveSheetAllCells(!assert is PmlAssert)
     using namespace 'PMLExcel'
     !wb = object PMLExcelWorkbook()
     !wb.Open()
+
     !assert.equal('$$1:$$1048576', !wb.Cells().GetAddress())
+
     !wb.Close()
 endmethod
 
@@ -18,7 +20,9 @@ define method .testActiveSheetCell(!assert is PmlAssert)
     using namespace 'PMLExcel'
     !wb = object PMLExcelWorkbook()
     !wb.Open()
+
     !assert.equal('$$C$$2', !wb.Cells(2, 3).GetAddress())
+
     !wb.Close()
 endmethod
 
@@ -26,35 +30,64 @@ define method .testActiveSheetRange(!assert is PmlAssert)
     using namespace 'PMLExcel'
     !wb = object PMLExcelWorkbook()
     !wb.Open()
+
     !assert.equal('$$C$$2', !wb.Range('C2').GetAddress())
+
     !wb.Close()
 endmethod
 
-define method .testToArray(!assert is PmlAssert)
+define method .testActiveSheetSelection(!assert is PmlAssert)
     using namespace 'PMLExcel'
     !wb = object PMLExcelWorkbook()
     !wb.Open()
+
+    !wb.Range('B2:D4').Select()
+    !assert.equal('$$B$$2:$$D$$4', !wb.Selection().GetAddress())
+
+    !wb.Close()
+endmethod
+
+define method .testActiveSheetUsedRange(!assert is PmlAssert)
+    using namespace 'PMLExcel'
+    !wb = object PMLExcelWorkbook()
+    !wb.Open()
+
+    !wb.Range('B2').SetValue('start')
+    !wb.Range('D4').SetValue('end')
+    !assert.equal('$$B$$2:$$D$$4', !wb.UsedRange().GetAddress())
+
+    !wb.Close()
+endmethod
+
+define method .testCellsOneDim(!assert is PmlAssert)
+    using namespace 'PMLExcel'
+    !wb = object PMLExcelWorkbook()
+    !wb.Open()
+
     !expecteds = Split('$$B$$2 $$C$$2 $$D$$2 $$B$$3 $$C$$3 $$D$$3 $$B$$4 $$C$$4 $$D$$4')
-    !ranges = !wb.Range('B2:D4').ToArray()
-    do !i indices !ranges
-        !assert.equal(!expecteds[!i], !ranges[!i].GetAddress())
+    !range = !wb.Range('B2:D4')
+    do !i to !range.Count()
+        !assert.equal(!expecteds[!i], !range.Cells(!i).GetAddress())
     enddo
+
     !wb.Close()
 endmethod
 
-define method .testToArrayOfArray(!assert is PmlAssert)
+define method .testCellsTwoDim(!assert is PmlAssert)
     using namespace 'PMLExcel'
     !wb = object PMLExcelWorkbook()
     !wb.Open()
+
     !expecteds[1] = Split('$$B$$2 $$C$$2 $$D$$2')
     !expecteds[2] = Split('$$B$$3 $$C$$3 $$D$$3')
     !expecteds[3] = Split('$$B$$4 $$C$$4 $$D$$4')
-    !ranges = !wb.Range('B2:D4').ToArrayOfArray()
-    do !r indices !ranges
-        do !c indices !ranges[!r]
-            !assert.equal(!expecteds[!r][!c], !ranges[!r][!c].GetAddress())
+    !range = !wb.Range('B2:D4')
+    do !r to !range.CountRows()
+        do !c to !range.CountColumns()
+            !assert.equal(!expecteds[!r][!c], !range.Cells(!r, !c).GetAddress())
         enddo
     enddo
+
     !wb.Close()
 endmethod
 
@@ -62,7 +95,9 @@ define method .testOffset(!assert is PmlAssert)
     using namespace 'PMLExcel'
     !wb = object PMLExcelWorkbook()
     !wb.Open()
-    !assert.equal('$$D$$3', !wb.Range('B2').Offset(1, 2).GetAddress())
+
+    !assert.equal('$$E$$4', !wb.Range('B2').Offset(2, 3).GetAddress())
+
     !wb.Close()
 endmethod
 
@@ -70,16 +105,21 @@ define method .testResize(!assert is PmlAssert)
     using namespace 'PMLExcel'
     !wb = object PMLExcelWorkbook()
     !wb.Open()
+
     !assert.equal('$$B$$2:$$D$$3', !wb.Range('B2').Resize(2, 3).GetAddress())
+
     !wb.Close()
 endmethod
 
-define method .testCurrentRegion(!assert is PmlAssert)
+define method .testSetValueString(!assert is PmlAssert)
     using namespace 'PMLExcel'
     !wb = object PMLExcelWorkbook()
     !wb.Open()
-    !wb.Range('B2:D4').SetValue('test')
-    !assert.equal('$$B$$2:$$D$$4', !wb.Range('C3').CurrentRegion().GetAddress())
+
+    !range = !wb.Range('B2')
+    !range.SetValue('test')
+    !assert.equal('test', !range.GetValue())
+
     !wb.Close()
 endmethod
 
@@ -87,49 +127,46 @@ define method .testSetValueArray(!assert is PmlAssert)
     using namespace 'PMLExcel'
     !wb = object PMLExcelWorkbook()
     !wb.Open()
+
     !expecteds = Split('Alice Bob Charlie')
     !range = !wb.Range('B2:D2')
     !range.SetValue(!expecteds)
-    !cells = !range.ToArray()
-    do !i indices !cells
-        !assert.equal(!expecteds[!i], !cells[!i].GetValue())
+    do !i to !range.Count()
+        !assert.equal(!expecteds[!i], !range.Cells(!i).GetValue())
     enddo
+
+    !wb.Close()
 endmethod
 
 define method .testSetValueArrayOfArray(!assert is PmlAssert)
     using namespace 'PMLExcel'
     !wb = object PMLExcelWorkbook()
     !wb.Open()
+
     !expecteds[1] = Split('Alice US 123')
     !expecteds[2] = Split('Bob UK 456')
     !expecteds[3] = Split('Charlie Canada 789')
     !range = !wb.Range('B2:D4')
     !range.SetValue(!expecteds)
-    !rows = !range.ToArrayOfArray()
-    do !r indices !rows
-        do !c indices !rows[!r]
-            !assert.equal(!expecteds[!r][!c], !rows[!r][!c].GetValue())
+    do !r to !range.CountRows()
+        do !c to !range.CountColumns()
+            !assert.equal(!expecteds[!r][!c], !range.Cells(!r, !c).GetValue())
         enddo
     enddo
-endmethod
 
-define method .testFormula(!assert is PmlAssert)
-    using namespace 'PMLExcel'
-    !wb = object PMLExcelWorkbook()
-    !wb.Open()
-    !range = !wb.Cells(1, 1)
-    !range.SetValue('=1+2')
-    !assert.equal('=1+2', !range.GetFormula())
-    !assert.equal('3', !range.GetValue())
     !wb.Close()
 endmethod
 
-define method .testSelect(!assert is PmlAssert)
+define method .testGetFormula(!assert is PmlAssert)
     using namespace 'PMLExcel'
     !wb = object PMLExcelWorkbook()
     !wb.Open()
-    !wb.Range('B2:D4').Select()
-    !assert.equal('$$B$$2:$$D$$4', !wb.Selection().GetAddress())
+
+    !range = !wb.Range('B2')
+    !range.SetValue('=1+2')
+    !assert.equal('=1+2', !range.GetFormula())
+    !assert.equal('3', !range.GetValue())
+
     !wb.Close()
 endmethod
 
@@ -137,104 +174,115 @@ define method .testClearContents(!assert is PmlAssert)
     using namespace 'PMLExcel'
     !wb = object PMLExcelWorkbook()
     !wb.Open()
-    !range = !wb.Cells(1, 1)
+
+    !range = !wb.Range('B2')
     !range.SetValue('test')
-    !assert.equal('test', !range.GetValue())
     !range.ClearContents()
     !assert.equal('', !range.GetValue())
-    !wb.Close()
-endmethod
-
-define method .testCopyAndPaste(!assert is PmlAssert)
-    using namespace 'PMLExcel'
-    !wb = object PMLExcelWorkbook()
-    !wb.Open()
-    !src = !wb.Cells(1, 1)
-    !dst = !wb.Cells(2, 2)
-    !src.SetValue('test')
-    !src.Copy()
-    !dst.Paste()
-    !assert.equal('test', !dst.GetValue())
-    !wb.Close()
-endmethod
-
-define method .testCreateTableWithHeader(!assert is PmlAssert)
-    using namespace 'PMLExcel'
-    !wb = object PMLExcelWorkbook()
-    !wb.Open()
-
-    !wb.Cells(2, 2).SetValue('Name')
-    !wb.Cells(2, 3).SetValue('Country')
-    !wb.Cells(2, 4).SetValue('Number')
-    !wb.Cells(3, 2).SetValue('Alice')
-    !wb.Cells(3, 3).SetValue('US')
-    !wb.Cells(3, 4).SetValue('123')
-    !wb.Cells(4, 2).SetValue('Bob')
-    !wb.Cells(4, 3).SetValue('UK')
-    !wb.Cells(4, 4).SetValue('456')
-    !wb.Cells(5, 2).SetValue('Charlie')
-    !wb.Cells(5, 3).SetValue('Canada')
-    !wb.Cells(5, 4).SetValue('789')
-    !wb.Cells(3, 3).CurrentRegion().CreateTable('TestTable', true)
-
-    !headers = !wb.Range('TestTable[#Headers]').ToArray()
-    !assert.equal('Name', !headers[1].GetValue())
-    !assert.equal('Country', !headers[2].GetValue())
-    !assert.equal('Number', !headers[3].GetValue())
-
-    !name = !wb.Range('TestTable[Name]').ToArray()
-    !assert.equal('Alice', !name[1].GetValue())
-    !assert.equal('Bob', !name[2].GetValue())
-    !assert.equal('Charlie', !name[3].GetValue())
-
-    !country = !wb.Range('TestTable[Country]').ToArray()
-    !assert.equal('US', !country[1].GetValue())
-    !assert.equal('UK', !country[2].GetValue())
-    !assert.equal('Canada', !country[3].GetValue())
-
-    !number = !wb.Range('TestTable[Number]').ToArray()
-    !assert.equal('123', !number[1].GetValue())
-    !assert.equal('456', !number[2].GetValue())
-    !assert.equal('789', !number[3].GetValue())
 
     !wb.Close()
 endmethod
 
-define method .testCreateTableWithoutHeader(!assert is PmlAssert)
+define method .testDefineName(!assert is PmlAssert)
     using namespace 'PMLExcel'
     !wb = object PMLExcelWorkbook()
     !wb.Open()
 
-    !wb.Cells(3, 2).SetValue('Alice')
-    !wb.Cells(3, 3).SetValue('US')
-    !wb.Cells(3, 4).SetValue('123')
-    !wb.Cells(4, 2).SetValue('Bob')
-    !wb.Cells(4, 3).SetValue('UK')
-    !wb.Cells(4, 4).SetValue('456')
-    !wb.Cells(5, 2).SetValue('Charlie')
-    !wb.Cells(5, 3).SetValue('Canada')
-    !wb.Cells(5, 4).SetValue('789')
-    !wb.Cells(3, 3).CurrentRegion().CreateTable('TestTable', false)
+    !wb.Range('B2').DefineName('TestName')
+    !assert.equal('$$B$$2', !wb.Range('TestName').GetAddress())
 
-    !headers = !wb.Range('TestTable[#Headers]').ToArray()
-    !assert.equal('Column1', !headers[1].GetValue())
-    !assert.equal('Column2', !headers[2].GetValue())
-    !assert.equal('Column3', !headers[3].GetValue())
+    !wb.Close()
+endmethod
 
-    !name = !wb.Range('TestTable[Column1]').ToArray()
-    !assert.equal('Alice', !name[1].GetValue())
-    !assert.equal('Bob', !name[2].GetValue())
-    !assert.equal('Charlie', !name[3].GetValue())
+define method .testCreateTableWithHeaders(!assert is PmlAssert)
+    using namespace 'PMLExcel'
+    !wb = object PMLExcelWorkbook()
+    !wb.Open()
 
-    !country = !wb.Range('TestTable[Column2]').ToArray()
-    !assert.equal('US', !country[1].GetValue())
-    !assert.equal('UK', !country[2].GetValue())
-    !assert.equal('Canada', !country[3].GetValue())
+    !wb.Range('A1:C1').SetValue(Split('Name Country Number'))
+    !wb.Range('A2:C2').SetValue(Split('Alice US 123'))
+    !wb.Range('A3:C3').SetValue(Split('Bob UK 456'))
+    !wb.Range('A4:C4').SetValue(Split('Charlie Canada 789'))
 
-    !number = !wb.Range('TestTable[Column3]').ToArray()
-    !assert.equal('123', !number[1].GetValue())
-    !assert.equal('456', !number[2].GetValue())
-    !assert.equal('789', !number[3].GetValue())
+    !wb.UsedRange().CreateTable('TestTable', true)
+
+    !headers = !wb.Range('TestTable[#Headers]')
+    !assert.equal('Name',    !headers.Cells(1).GetValue())
+    !assert.equal('Country', !headers.Cells(2).GetValue())
+    !assert.equal('Number',  !headers.Cells(3).GetValue())
+
+    !name = !wb.Range('TestTable[Name]')
+    !assert.equal('Alice',   !name.Cells(1).GetValue())
+    !assert.equal('Bob',     !name.Cells(2).GetValue())
+    !assert.equal('Charlie', !name.Cells(3).GetValue())
+
+    !country = !wb.Range('TestTable[Country]')
+    !assert.equal('US',     !country.Cells(1).GetValue())
+    !assert.equal('UK',     !country.Cells(2).GetValue())
+    !assert.equal('Canada', !country.Cells(3).GetValue())
+
+    !number = !wb.Range('TestTable[Number]')
+    !assert.equal('123', !number.Cells(1).GetValue())
+    !assert.equal('456', !number.Cells(2).GetValue())
+    !assert.equal('789', !number.Cells(3).GetValue())
+
+    !wb.Close()
+endmethod
+
+define method .testCreateTableWithoutHeaders(!assert is PmlAssert)
+    using namespace 'PMLExcel'
+    !wb = object PMLExcelWorkbook()
+    !wb.Open()
+
+    !wb.Range('A2:C2').SetValue(Split('Alice US 123'))
+    !wb.Range('A3:C3').SetValue(Split('Bob UK 456'))
+    !wb.Range('A4:C4').SetValue(Split('Charlie Canada 789'))
+
+    !wb.UsedRange().CreateTable('TestTable', false)
+
+    !headers = !wb.Range('TestTable[#Headers]')
+    !assert.equal('Column1', !headers.Cells(1).GetValue())
+    !assert.equal('Column2', !headers.Cells(2).GetValue())
+    !assert.equal('Column3', !headers.Cells(3).GetValue())
+
+    !name = !wb.Range('TestTable[Column1]')
+    !assert.equal('Alice',   !name.Cells(1).GetValue())
+    !assert.equal('Bob',     !name.Cells(2).GetValue())
+    !assert.equal('Charlie', !name.Cells(3).GetValue())
+
+    !country = !wb.Range('TestTable[Column2]')
+    !assert.equal('US',     !country.Cells(1).GetValue())
+    !assert.equal('UK',     !country.Cells(2).GetValue())
+    !assert.equal('Canada', !country.Cells(3).GetValue())
+
+    !number = !wb.Range('TestTable[Column3]')
+    !assert.equal('123', !number.Cells(1).GetValue())
+    !assert.equal('456', !number.Cells(2).GetValue())
+    !assert.equal('789', !number.Cells(3).GetValue())
+
+    !wb.Close()
+endmethod
+
+define method .testRowHeight(!assert is PmlAssert)
+    using namespace 'PMLExcel'
+    !wb = object PMLExcelWorkbook()
+    !wb.Open()
+
+    !range = !wb.Range('B2')
+    !range.SetRowHeight(100)
+    !assert.equal(100, !range.GetRowHeight())
+
+    !wb.Close()
+endmethod
+
+define method .testColumnWidth(!assert is PmlAssert)
+    using namespace 'PMLExcel'
+    !wb = object PMLExcelWorkbook()
+    !wb.Open()
+
+    !range = !wb.Range('B2')
+    !range.SetColumnWidth(100)
+    !assert.equal(100, !range.GetColumnWidth())
 
     !wb.Close()
 endmethod

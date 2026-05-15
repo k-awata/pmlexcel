@@ -4,12 +4,7 @@ handle any
 endhandle
 
 define object PMLExcelWorkbookTest
-    member .sleeptime is REAL
 endobject
-
-define method .setup()
-    !this.sleeptime = 50
-endmethod
 
 define method .testOpenAndSave(!assert is PmlAssert)
     using namespace 'PMLExcel'
@@ -17,26 +12,20 @@ define method .testOpenAndSave(!assert is PmlAssert)
     !file = object FILE('%temp%\pmlexceltest.xlsx')
 
     !wb.Open()
-    !wb.Show()
-    !wb.Cells(1, 1).SetValue('test 1')
+    !wb.Range('A1').SetValue('test 1')
     !wb.SaveAs(!file.Name())
-    !wb.Sleep(!this.sleeptime)
     !wb.Close()
 
     !wb.Open(!file.Name())
-    !wb.Show()
-    !assert.equal('test 1', !wb.Cells(1, 1).GetValue())
-    !wb.Cells(1, 1).SetValue('test 2')
+    !assert.equal('test 1', !wb.Range('A1').GetValue())
+    !wb.Range('A1').SetValue('test 2')
     !wb.Save()
-    !wb.Sleep(!this.sleeptime)
     !wb.Close()
 
     !wb.Open(!file.Name())
-    !wb.Show()
-    !assert.equal('test 2', !wb.Cells(1, 1).GetValue())
-    !wb.Cells(1, 1).SetValue('ok')
-    !wb.Sleep(!this.sleeptime)
+    !assert.equal('test 2', !wb.Range('A1').GetValue())
     !wb.Close()
+
     !file.DeleteFile()
 endmethod
 
@@ -44,52 +33,138 @@ define method .testShowAndHide(!assert is PmlAssert)
     using namespace 'PMLExcel'
     !wb = object PMLExcelWorkbook()
     !wb.Open()
+
+    !sleep = 500
+
     !wb.Show()
-    !wb.Cells(1, 1).SetValue('testtest 1')
-    !wb.Cells(1, 1).AutoFitColumns()
-    !wb.Sleep(!this.sleeptime)
+    !wb.Range('A1').SetValue('test value 1')
+    !wb.Range('A1').AutoFitColumn()
+    !wb.Sleep(!sleep)
+
     !wb.Hide()
-    !wb.Cells(1, 1).SetValue('test 2')
-    !wb.Cells(1, 1).AutoFitColumns()
-    !wb.Sleep(!this.sleeptime)
+    !wb.Range('A1').SetValue('test
+value
+2')
+    !wb.Range('A1').AutoFitRow()
+    !wb.Sleep(!sleep)
+
     !wb.Show()
-    !wb.Sleep(!this.sleeptime)
+    !wb.Sleep(!sleep)
+
     !wb.Close()
 endmethod
 
-define method .testControlSheet(!assert is PmlAssert)
+define method .testControlSheets(!assert is PmlAssert)
     using namespace 'PMLExcel'
     !wb = object PMLExcelWorkbook()
     !wb.Open()
-    !wb.Show()
-    !wb.Sleep(!this.sleeptime)
+
     !wb.AddSheet()
-    !wb.Sleep(!this.sleeptime)
-    !wb.Cells(1, 1).SetValue('test 1')
-    !wb.Sleep(!this.sleeptime)
-    !wb.SetActiveSheetName('foo')
-    !wb.Sleep(!this.sleeptime)
+    !wb.NameActiveSheet('foo')
+    !wb.Range('A1').SetValue('test 1')
+
     !wb.AddSheet('bar')
-    !wb.Sleep(!this.sleeptime)
-    !wb.Cells(1, 1).SetValue('test 2')
-    !wb.Sleep(!this.sleeptime)
+    !wb.Range('A1').SetValue('test 2')
+
     !wb.CopySheet('bar', 'baz')
-    !wb.Sleep(!this.sleeptime)
-    !wb.SelectSheet('foo')
-    !assert.equal('test 1', !wb.Cells(1, 1).GetValue())
-    !wb.Sleep(!this.sleeptime)
-    !wb.SelectSheet('bar')
-    !assert.equal('test 2', !wb.Cells(1, 1).GetValue())
-    !wb.Sleep(!this.sleeptime)
-    !wb.SelectSheet('baz')
-    !assert.equal('test 2', !wb.Cells(1, 1).GetValue())
-    !wb.Sleep(!this.sleeptime)
+
+    !wb.ActivateSheet('foo')
+    !assert.equal('test 1', !wb.Range('A1').GetValue())
+    !wb.ActivateSheet('bar')
+    !assert.equal('test 2', !wb.Range('A1').GetValue())
+    !wb.ActivateSheet('baz')
+    !assert.equal('test 2', !wb.Range('A1').GetValue())
+
     !wb.DeleteSheet('foo')
-    !wb.Sleep(!this.sleeptime)
     !wb.DeleteSheet('bar')
-    !wb.Sleep(!this.sleeptime)
     !wb.DeleteSheet('baz')
-    !wb.Cells(1, 1).SetValue('ok')
-    !wb.Sleep(!this.sleeptime)
+
+    !wb.Close()
+endmethod
+
+define method .testCopyAndPaste(!assert is PmlAssert)
+    using namespace 'PMLExcel'
+    !wb = object PMLExcelWorkbook()
+    !wb.Open()
+
+    !wb.Range('A1').Select()
+    !wb.Selection().SetValue('test')
+    !wb.CopySelection()
+
+    !wb.Range('B2').Select()
+    !wb.Paste()
+    !assert.equal(!wb.Range('A1').GetValue(), !wb.Range('B2').GetValue())
+
+    !wb.Close()
+endmethod
+
+define method .testNameSelection(!assert is PmlAssert)
+    using namespace 'PMLExcel'
+    !wb = object PMLExcelWorkbook()
+    !wb.Open()
+
+    !wb.Range('B2').Select()
+    !wb.NameSelection('TestName')
+    !assert.equal('$$B$$2', !wb.Range('TestName').GetAddress())
+    !wb.DeleteName('TestName')
+
+    !wb.Close()
+endmethod
+
+define method .testWorksheetFunctionCeilingMath(!assert is PmlAssert)
+    using namespace 'PMLExcel'
+    !wb = object PMLExcelWorkbook()
+    !wb.Open()
+
+    -- This can test the following matters:
+    -- * Function name included dot
+    -- * Converting string arg to double
+
+    !args = Split('12 5')
+    !assert.equal('15', !wb.WorksheetFunction('CEILING.MATH', !args))
+
+    !wb.Close()
+endmethod
+
+define method .testWorksheetFunctionSum(!assert is PmlAssert)
+    using namespace 'PMLExcel'
+    !wb = object PMLExcelWorkbook()
+    !wb.Open()
+
+    -- This can test the following matters:
+    -- * Optional args
+    -- * Converting PMLExcelRange arg to Excel.Range
+
+    !wb.Range('A1:C3').SetValue('2')
+
+    !args = object ARRAY()
+    !args.Append(!wb.Range('A1'))
+    !args.Append(!wb.Range('A2'))
+    !args.Append(!wb.Range('B1:C2'))
+    !assert.equal('12', !wb.WorksheetFunction('SUM', !args))
+
+    !wb.Close()
+endmethod
+
+define method .testWorksheetFunctionVLookup(!assert is PmlAssert)
+    using namespace 'PMLExcel'
+    !wb = object PMLExcelWorkbook()
+    !wb.Open()
+
+    -- This can test the following matters:
+    -- * Converting Jagged Hashtable arg to object[]
+
+    !table = object ARRAY()
+    !table.Append(Split('Alice US 123'))
+    !table.Append(Split('Bob UK 456'))
+    !table.Append(Split('Charlie Canada 789'))
+
+    !args = object ARRAY()
+    !args.Append('Bob')
+    !args.Append(!table)
+    !args.Append(3)
+    !args.Append(false)
+    !assert.equal('456', !wb.WorksheetFunction('VLOOKUP', !args))
+
     !wb.Close()
 endmethod

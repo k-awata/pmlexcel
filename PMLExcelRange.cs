@@ -13,7 +13,7 @@ namespace PMLExcel
     [PMLNetCallable()]
     public class PMLExcelRange
     {
-        private Excel.Range range;
+        public Excel.Range Raw { get; private set; }
 
         [PMLNetCallable()]
         public PMLExcelRange()
@@ -22,54 +22,26 @@ namespace PMLExcel
 
         public PMLExcelRange(Excel.Range r)
         {
-            range = r;
+            Raw = r;
         }
 
         [PMLNetCallable()]
         public void Assign(PMLExcelRange that)
         {
-            range = that.range;
+            Raw = that.Raw;
         }
 
-        [PMLNetCallable()]
-        public string GetAddress()
+        public override string ToString()
         {
-            return range.Address;
+            return GetValue();
         }
 
         [PMLNetCallable()]
-        public Hashtable ToArray()
-        {
-            var cells = new Hashtable();
-            for (long i = 1; i <= (long)range.CountLarge; i++)
-            {
-                cells.Add((double)i, new PMLExcelRange((Excel.Range)range.Cells[i]));
-            }
-            return cells;
-        }
-
-        [PMLNetCallable()]
-        public Hashtable ToArrayOfArray()
-        {
-            var rows = new Hashtable();
-            for (int r = 1; r <= range.Rows.Count; r++)
-            {
-                var cols = new Hashtable();
-                for (int c = 1; c <= range.Columns.Count; c++)
-                {
-                    cols.Add((double)c, new PMLExcelRange((Excel.Range)range.Cells[r, c]));
-                }
-                rows.Add((double)r, cols);
-            }
-            return rows;
-        }
-
-        [PMLNetCallable()]
-        public PMLExcelRange Offset(double r, double c)
+        public PMLExcelRange Cells(double i)
         {
             try
             {
-                return new PMLExcelRange(range.Offset[(long)r, (long)c]);
+                return new PMLExcelRange((Excel.Range)Raw.Cells[(long)i]);
             }
             catch (COMException)
             {
@@ -78,11 +50,11 @@ namespace PMLExcel
         }
 
         [PMLNetCallable()]
-        public PMLExcelRange Resize(double r, double c)
+        public PMLExcelRange Cells(double r, double c)
         {
             try
             {
-                return new PMLExcelRange(range.Resize[(long)r, (long)c]);
+                return new PMLExcelRange((Excel.Range)Raw.Cells[(int)r, (int)c]);
             }
             catch (COMException)
             {
@@ -91,15 +63,65 @@ namespace PMLExcel
         }
 
         [PMLNetCallable()]
+        public PMLExcelRange Offset(double r, double c)
+        {
+            try
+            {
+                return new PMLExcelRange(Raw.Offset[(int)r, (int)c]);
+            }
+            catch (COMException)
+            {
+                throw new PMLNetException(1000, 13, "Invalid range reference");
+            }
+        }
+
+        [PMLNetCallable()]
+        public PMLExcelRange Resize(double r, double c)
+        {
+            try
+            {
+                return new PMLExcelRange(Raw.Resize[(int)r, (int)c]);
+            }
+            catch (COMException)
+            {
+                throw new PMLNetException(1000, 14, "Invalid range reference");
+            }
+        }
+
+        [PMLNetCallable()]
         public PMLExcelRange CurrentRegion()
         {
-            return new PMLExcelRange(range.CurrentRegion);
+            return new PMLExcelRange(Raw.CurrentRegion);
+        }
+
+        [PMLNetCallable()]
+        public string GetAddress()
+        {
+            return Raw.Address;
+        }
+
+        [PMLNetCallable()]
+        public double Count()
+        {
+            return (long)Raw.CountLarge;
+        }
+
+        [PMLNetCallable()]
+        public double CountRows()
+        {
+            return Raw.Rows.Count;
+        }
+
+        [PMLNetCallable()]
+        public double CountColumns()
+        {
+            return Raw.Columns.Count;
         }
 
         [PMLNetCallable()]
         public void SetValue(string s)
         {
-            range.Value = s;
+            Raw.Value = s;
         }
 
         [PMLNetCallable()]
@@ -109,12 +131,7 @@ namespace PMLExcel
             var cCount = rows.Values.OfType<Hashtable>().DefaultIfEmpty(new Hashtable()).Max(cols => cols.Count);
             if (cCount == 0)
             {
-                var values = new object[rCount];
-                for (int r = 0; r < rCount; r++)
-                {
-                    values[r] = rows[r + 1.0];
-                }
-                range.Value = values;
+                Raw.Value = rows.Keys.OfType<double>().OrderBy(key => key).Select(key => rows[key]).ToArray();
             }
             else
             {
@@ -129,67 +146,91 @@ namespace PMLExcel
                         }
                     }
                 }
-                range.Value = values;
+                Raw.Value = values;
             }
         }
 
         [PMLNetCallable()]
         public string GetValue()
         {
-            if (range.Value is object[,] cells)
+            if (Raw.Value is object[,] cells)
             {
                 return Convert.ToString(cells[cells.GetLowerBound(0), cells.GetLowerBound(1)]);
             }
-            return Convert.ToString(range.Value);
+            return Convert.ToString(Raw.Value);
         }
 
         [PMLNetCallable()]
         public string GetFormula()
         {
-            if (range.Formula is object[,] cells)
+            if (Raw.Formula is object[,] cells)
             {
                 return Convert.ToString(cells[cells.GetLowerBound(0), cells.GetLowerBound(1)]);
             }
-            return Convert.ToString(range.Formula);
-        }
-
-        [PMLNetCallable()]
-        public void Select()
-        {
-            range.Select();
+            return Convert.ToString(Raw.Formula);
         }
 
         [PMLNetCallable()]
         public void ClearContents()
         {
-            range.ClearContents();
+            Raw.ClearContents();
         }
 
         [PMLNetCallable()]
-        public void AutoFitColumns()
+        public void Select()
         {
-            range.EntireColumn.AutoFit();
+            Raw.Select();
         }
 
         [PMLNetCallable()]
-        public void Copy()
+        public void DefineName(string name)
         {
-            range.Copy();
+            Raw.Name = name;
         }
 
         [PMLNetCallable()]
-        public void Paste()
+        public void CreateTable(string name, bool hasHeaders)
         {
-            ((Excel.Worksheet)range.Parent).Paste(range);
-        }
-
-        [PMLNetCallable()]
-        public void CreateTable(string name, bool header)
-        {
-            ((Excel.Worksheet)range.Parent).ListObjects.Add(
-                Source: range,
-                XlListObjectHasHeaders: header ? Excel.XlYesNoGuess.xlYes : Excel.XlYesNoGuess.xlNo
+            ((Excel.Worksheet)Raw.Parent).ListObjects.Add(
+                Source: Raw,
+                XlListObjectHasHeaders: hasHeaders ? Excel.XlYesNoGuess.xlYes : Excel.XlYesNoGuess.xlNo
             ).Name = name;
+        }
+
+        [PMLNetCallable()]
+        public double GetRowHeight()
+        {
+            return (double)Raw.EntireRow.RowHeight;
+        }
+
+        [PMLNetCallable()]
+        public void SetRowHeight(double height)
+        {
+            Raw.EntireRow.RowHeight = height;
+        }
+
+        [PMLNetCallable()]
+        public void AutoFitRow()
+        {
+            Raw.EntireRow.AutoFit();
+        }
+
+        [PMLNetCallable()]
+        public double GetColumnWidth()
+        {
+            return (double)Raw.EntireColumn.ColumnWidth;
+        }
+
+        [PMLNetCallable()]
+        public void SetColumnWidth(double width)
+        {
+            Raw.EntireColumn.ColumnWidth = width;
+        }
+
+        [PMLNetCallable()]
+        public void AutoFitColumn()
+        {
+            Raw.EntireColumn.AutoFit();
         }
     }
 }
