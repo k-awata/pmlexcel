@@ -286,3 +286,16 @@ define method .testColumnWidth(!assert is PmlAssert)
 
     !wb.Close()
 endmethod
+
+define method .testCopyAndPaste(!assert is PmlAssert)
+    using namespace 'PMLExcel'
+    !wb = object PMLExcelWorkbook()
+    !wb.Open()
+
+    !wb.Range('A1').SetValue('test')
+    !wb.Range('A1').Copy()
+    !wb.Range('B2').Paste()
+    !assert.equal(!wb.Range('A1').GetValue(), !wb.Range('B2').GetValue())
+
+    !wb.Close()
+endmethod

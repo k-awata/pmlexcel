@@ -232,5 +232,17 @@ namespace PMLExcel
         {
             Raw.EntireColumn.AutoFit();
         }
+
+        [PMLNetCallable()]
+        public void Copy()
+        {
+            Raw.Copy();
+        }
+
+        [PMLNetCallable()]
+        public void Paste()
+        {
+            ((Excel.Worksheet)Raw.Parent).Paste(Raw);
+        }
     }
 }
