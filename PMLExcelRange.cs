@@ -89,9 +89,15 @@ namespace PMLExcel
         }
 
         [PMLNetCallable()]
-        public PMLExcelRange CurrentRegion()
+        public PMLExcelRange Find(string what)
         {
-            return new PMLExcelRange(Raw.CurrentRegion);
+            return new PMLExcelRange(Raw.Find(what));
+        }
+
+        [PMLNetCallable()]
+        public bool IsNull()
+        {
+            return Raw == null;
         }
 
         [PMLNetCallable()]

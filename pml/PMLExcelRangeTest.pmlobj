@@ -111,6 +111,23 @@ define method .testResize(!assert is PmlAssert)
     !wb.Close()
 endmethod
 
+define method .testFind(!assert is PmlAssert)
+    using namespace 'PMLExcel'
+    !wb = object PMLExcelWorkbook()
+    !wb.Open()
+
+    !wb.Range('B2').SetValue('foo')
+    !wb.Range('C3').SetValue('bar')
+    !wb.Range('D4').SetValue('baz')
+    !wb.Range('E5').SetValue('bar')
+
+    !assert.equal('$$C$$3', !wb.Cells().Find('bar').GetAddress())
+    !assert.equal('$$E$$5', !wb.Range('C3').Find('bar').GetAddress())
+    !assert.isTrue(!wb.Cells().Find('foobar').IsNull())
+
+    !wb.Close()
+endmethod
+
 define method .testSetValueString(!assert is PmlAssert)
     using namespace 'PMLExcel'
     !wb = object PMLExcelWorkbook()
