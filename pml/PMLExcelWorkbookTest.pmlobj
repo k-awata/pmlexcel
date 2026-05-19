@@ -6,6 +6,17 @@ endhandle
 define object PMLExcelWorkbookTest
 endobject
 
+define method .testOpenAndClose(!assert is PmlAssert)
+    using namespace 'PMLExcel'
+    !wb = object PMLExcelWorkbook()
+
+    !assert.isFalse(!wb.IsOpen())
+    !wb.Open()
+    !assert.isTrue(!wb.IsOpen())
+    !wb.Close()
+    !assert.isFalse(!wb.IsOpen())
+endmethod
+
 define method .testOpenAndSave(!assert is PmlAssert)
     using namespace 'PMLExcel'
     !wb = object PMLExcelWorkbook()

@@ -49,7 +49,7 @@ namespace PMLExcel
 
         private void CreateApp()
         {
-            if (app != null)
+            if (IsOpen())
             {
                 throw new PMLNetException(1000, 1, "Excel is already open");
             }
@@ -118,7 +118,7 @@ namespace PMLExcel
         [PMLNetCallable()]
         public void Close()
         {
-            if (app == null)
+            if (!IsOpen())
             {
                 return;
             }
@@ -128,6 +128,12 @@ namespace PMLExcel
             app = null;
             wb = null;
             GC.Collect();
+        }
+
+        [PMLNetCallable()]
+        public bool IsOpen()
+        {
+            return app != null;
         }
 
         [PMLNetCallable()]
