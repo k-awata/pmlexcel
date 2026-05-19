@@ -26,6 +26,7 @@ define method .testOpenAndSave(!assert is PmlAssert)
     !assert.equal('test 2', !wb.Range('A1').GetValue())
     !wb.Close()
 
+    !wb.Sleep(500)
     !file.DeleteFile()
 endmethod
 
