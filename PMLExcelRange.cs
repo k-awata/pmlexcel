@@ -250,5 +250,17 @@ namespace PMLExcel
         {
             ((Worksheet)Raw.Parent).Paste(Raw);
         }
+
+        [PMLNetCallable()]
+        public bool IsHiddenRow()
+        {
+            return (bool)Raw.EntireRow.Hidden;
+        }
+
+        [PMLNetCallable()]
+        public bool IsHiddenColumn()
+        {
+            return (bool)Raw.EntireColumn.Hidden;
+        }
     }
 }
