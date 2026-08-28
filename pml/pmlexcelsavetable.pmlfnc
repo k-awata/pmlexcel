@@ -1,0 +1,63 @@
+﻿!!PMLEXCELPATH()
+import '$!!PMLEXCELPATH'
+handle any
+endhandle
+
+-- PMLEXCELSAVETABLE function saves the specified table array as an xlsx file.
+define function !!PMLEXCELSAVETABLE(!filename is STRING, !tblname is STRING, !data is ARRAY)
+    using namespace 'PMLExcel'
+    !excel = object PMLExcelWorkbook()
+
+    !table = object ARRAY()
+    do !row values !data
+        !newrow = object ARRAY()
+        do !value values !row
+            !type = !value.ObjectType()
+            if !type eq 'ARRAY' then
+                !string = ''
+                do !v values !value
+                    !string = Trim(!string + ' ' + !v.String())
+                enddo
+            elseif !type eq 'DBREF' then
+                if !value.Unset() then
+                    !string = 'Nulref'
+                elseif !value.Badref() then
+                    !string = 'Unknown Ref ($!<value>)'
+                elseif !value.isnamed then
+                    !string = !value.name
+                else
+                    !string = !value.String()
+                endif
+            elseif !type eq 'BORE' then
+                if !value.Real().Units().Name() eq 'mm' then
+                    !string = !value.Real().Value().String()
+                else
+                    !string = !value.String()
+                endif
+            elseif !type eq 'REAL' then
+                if !value.Units().Name() eq 'mm' then
+                    !string = !value.Value().String()
+                else
+                    !string = !value.String()
+                endif
+            else
+                !string = !value.String()
+            endif
+            if !string.Substring(1, 1) eq '=' then
+                !newrow.Append(|'| + !string)
+            else
+                !newrow.Append(!string)
+            endif
+        enddo
+        !table.Append(!newrow)
+    enddo
+
+    !excel.Open()
+    !excel.NameActiveSheet(!tblname)
+    !range = !excel.Range('A1').Resize(!table.Size(), !table.First().Size())
+    !range.SetValue(!table)
+    !range.CreateTable(!tblname, true)
+    !range.AutoFitColumn()
+    !excel.SaveAs(!filename)
+    !excel.Close()
+endfunction
