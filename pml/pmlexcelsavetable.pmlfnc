@@ -40,6 +40,13 @@ define function !!PMLEXCELSAVETABLE(!filename is STRING, !tblname is STRING, !da
                 else
                     !string = !value.String()
                 endif
+            elseif !type eq 'DATETIME' then
+                !string = !value.Year().String() $
+                    + '-' + Substring('0' + !value.Month().String(), -2, 2) $
+                    + '-' + Substring('0' + !value.Date().String(), -2, 2) $
+                    + ' ' + Substring('0' + !value.Hour().String(), -2, 2) $
+                    + ':' + Substring('0' + !value.Minute().String(), -2, 2) $
+                    + ':' + Substring('0' + !value.Second().String(), -2, 2)
             else
                 !string = !value.String()
             endif
